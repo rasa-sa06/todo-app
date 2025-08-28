@@ -5,8 +5,18 @@ import { useState } from 'react';
 
 
 const Todo = () => {
-    const [todoText,setTodoText]=useState("")
+    const [todoText,setTodoText]=useState<string>("")
+    const [incompleteTodos,setIncompleteTodos]=useState<string[]>([])
+
+
     const onChangeTodoText = (event :React.ChangeEvent<HTMLInputElement>) => setTodoText(event.target.value);
+
+    const onClickAdd = () => {
+    if (todoText === "") return;
+    const newTodos = [...incompleteTodos, todoText];
+    setIncompleteTodos(newTodos);
+    setTodoText("");
+    };
 
     return (
     <>
@@ -17,7 +27,7 @@ const Todo = () => {
         value={todoText}
         onChange={onChangeTodoText}
     />
-    <button>追加</button>
+    <button onClick={onClickAdd}>追加</button>
     </div>
 
     <div>
