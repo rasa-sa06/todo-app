@@ -17,7 +17,7 @@ const Todo = () => {
         value={todoText}
         onChange={onChangeTodoText}
     />
-    <button>作成</button>
+    <button>追加</button>
     </div>
 
     <div>
