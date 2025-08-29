@@ -22,9 +22,14 @@ const Todo = () => {
 
     // 削除ボタンを押したら消す
     const onClickDelete = (index: number) => {
-        const newTodos = [...incompleteTodos];
-        newTodos.splice(index, 1);
-        setIncompleteTodos(newTodos);
+        const newIncompleteTodos = [...incompleteTodos];
+        newIncompleteTodos.splice(index, 1);
+        const newConmpleteTodos = [...completeTodos];
+        newConmpleteTodos.splice(index, 1);
+
+        setIncompleteTodos(newIncompleteTodos);
+        setCompleteTodos(newConmpleteTodos);
+        
     };
 
     // 完了が選ばれたときに完了エリアにリストを移す（完了エリアで新しい配列を作る）
@@ -40,6 +45,18 @@ const Todo = () => {
             setIncompleteTodos(newIncompleteTodos);
             setCompleteTodos(newCompleteTodos);
         }
+    }
+
+    const onClickBack = (index: number) => {
+        // 完了エリアに新しい配列を作る
+        const newCompleteTodos = [...completeTodos];
+        newCompleteTodos.splice(index,1);
+        // 未完了のエリアに完了エリアから移動させて新しい配列を作る
+        const newIncompleteTodos =[...incompleteTodos,completeTodos[index]];
+
+        // ステートを更新
+        setCompleteTodos(newCompleteTodos);
+        setIncompleteTodos(newIncompleteTodos);
     }
 
     return (
@@ -78,7 +95,8 @@ const Todo = () => {
             {completeTodos.map((todo,index)=>
             <li key={index}>
                 {todo}
-                <button>戻す</button>
+                <button onClick={()=>onClickBack(index)}>戻す</button>
+                <button onClick={()=>onClickDelete(index)}>削除</button>
             </li>
             )}
         </ul>
