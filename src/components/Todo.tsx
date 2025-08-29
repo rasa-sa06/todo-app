@@ -7,16 +7,40 @@ import { useState } from 'react';
 const Todo = () => {
     const [todoText,setTodoText]=useState<string>("")
     const [incompleteTodos,setIncompleteTodos]=useState<string[]>([])
+    const [completeTodos, setCompleteTodos] = useState<string[]>([]);
 
 
     const onChangeTodoText = (event :React.ChangeEvent<HTMLInputElement>) => setTodoText(event.target.value);
 
+    // 追加ボタンを押した後に未完了のエリアに新しい配列を作る
     const onClickAdd = () => {
-    if (todoText === "") return;
-    const newTodos = [...incompleteTodos, todoText];
-    setIncompleteTodos(newTodos);
-    setTodoText("");
+        if (todoText === "") return;
+        const newTodos = [...incompleteTodos, todoText];
+        setIncompleteTodos(newTodos);
+        setTodoText("");
     };
+
+    // 削除ボタンを押したら消す
+    const onClickDelete = (index: number) => {
+        const newTodos = [...incompleteTodos];
+        newTodos.splice(index, 1);
+        setIncompleteTodos(newTodos);
+    };
+
+    // 完了が選ばれたときに完了エリアにリストを移す（完了エリアで新しい配列を作る）
+    const onChangeSelect = (index: number, value: string) => {
+        if (value=== "complete"){
+            // 未完了のエリアから削除
+            const newIncompleteTodos = [...incompleteTodos];
+            newIncompleteTodos.splice(index,1);
+            // 完了エリアに新しい配列を作る
+            const newCompleteTodos = [...completeTodos, incompleteTodos[index]];
+
+            // ステートの更新
+            setIncompleteTodos(newIncompleteTodos);
+            setCompleteTodos(newCompleteTodos);
+        }
+    }
 
     return (
     <>
@@ -33,21 +57,30 @@ const Todo = () => {
     <div>
         <p>未完了</p>
         <ul>
-            <li>やること</li>
-            <select name="incompleteSelect" id="">
-                <option value="ongoing">進行中</option>
-                <option value="waiting">未着手</option>
-                <option value="complete">完了</option>
-            </select>
-            <button>削除</button>
+            {incompleteTodos.map((todo,index)=>
+                <li key={index}>
+                    {todo}
+                    {/* ↓ indexも一緒に渡すのでアロー関数で渡す必要がある */}
+                    <select onChange={(event) => onChangeSelect(index, event.target.value)} name="incompleteSelect" id="">
+                        <option value="ongoing">進行中</option>
+                        <option value="waiting">未着手</option>
+                        <option value="complete">完了</option>
+                    </select>
+                <button onClick={()=>onClickDelete(index)}>削除</button>
+                </li>
+            )}
         </ul>
     </div>
 
     <div>
         <p>完了</p>
         <ul>
-            <li>やったこと</li>
-            <button>戻す</button>
+            {completeTodos.map((todo,index)=>
+            <li key={index}>
+                {todo}
+                <button>戻す</button>
+            </li>
+            )}
         </ul>
     </div>
 
