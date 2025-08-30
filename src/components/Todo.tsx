@@ -108,12 +108,15 @@ const Todo = () => {
                 <li key={index}>
                     
                     {/* ↓ indexも一緒に渡すのでアロー関数で渡す必要がある */}
+                    {/* ↓ 三項演算子で編集中ならinput、編集していないなら{todo}を表示 */}
                     {editIndex === index ? (
                         <input 
                         type="text"
+                        // 編集中の内容をエンターで確定させる
                         value={editText}
                         onChange={onChangeEditText}
                         onKeyDown={(event)=> onKeyDownEdit(event,index)}
+                        // 日本語の変換確定をさせる
                         onCompositionStart={() => setIsComposing(true)}
                         onCompositionEnd={() => setIsComposing(false)}
                         autoFocus
