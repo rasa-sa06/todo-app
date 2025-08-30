@@ -9,6 +9,10 @@ const Todo = () => {
     const [incompleteTodos,setIncompleteTodos]=useState<string[]>([])
     const [completeTodos, setCompleteTodos] = useState<string[]>([]);
 
+    // 編集機能用の状態
+    const [editIndex, setEditIndex] = useState<number | null>(null); // 編集中のindex
+    const [editText, setEditText] = useState<string>(""); // 編集中のテキスト
+    const [isComposing, setIsComposing] = useState(false); // 日本語変換と確定のEnterを区別する
 
     const onChangeTodoText = (event :React.ChangeEvent<HTMLInputElement>) => setTodoText(event.target.value);
 
@@ -24,11 +28,11 @@ const Todo = () => {
     const onClickDelete = (index: number) => {
         const newIncompleteTodos = [...incompleteTodos];
         newIncompleteTodos.splice(index, 1);
-        const newConmpleteTodos = [...completeTodos];
-        newConmpleteTodos.splice(index, 1);
+        const newCompleteTodos = [...completeTodos];
+        newCompleteTodos.splice(index, 1);
 
         setIncompleteTodos(newIncompleteTodos);
-        setCompleteTodos(newConmpleteTodos);
+        setCompleteTodos(newCompleteTodos);
         
     };
 
@@ -47,6 +51,7 @@ const Todo = () => {
         }
     }
 
+    // 戻るボタン
     const onClickBack = (index: number) => {
         // 完了エリアに新しい配列を作る
         const newCompleteTodos = [...completeTodos];
@@ -58,6 +63,30 @@ const Todo = () => {
         setCompleteTodos(newCompleteTodos);
         setIncompleteTodos(newIncompleteTodos);
     }
+
+    // 編集ボタンを押した時
+    const onClickEdit = (index: number) => {
+        setEditIndex(index);                    // 編集中のindexを設定
+        setEditText(incompleteTodos[index]);    // 現在のテキストを編集用stateに設定
+    };
+
+    // 編集中のテキストが変更された時
+    const onChangeEditText = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setEditText(event.target.value);
+    };
+
+    // エンターキーで編集確定
+    const onKeyDownEdit = (event: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+        if (event.key === "Enter" && !isComposing) {
+            const newIncompleteTodos = [...incompleteTodos];
+            newIncompleteTodos[index] = editText;   // 編集内容を反映
+            setIncompleteTodos(newIncompleteTodos);
+            
+            // 編集状態をリセット
+            setEditIndex(null);
+            setEditText("");
+        }
+    };
 
     return (
     <>
@@ -73,16 +102,33 @@ const Todo = () => {
 
     <div>
         <p>未完了</p>
+        <p style={{ fontSize: "12px", color:"blue" }}>※ 編集を確定するときはEnterで決定</p>
         <ul>
             {incompleteTodos.map((todo,index)=>
                 <li key={index}>
-                    {todo}
+                    
                     {/* ↓ indexも一緒に渡すのでアロー関数で渡す必要がある */}
+                    {editIndex === index ? (
+                        <input 
+                        type="text"
+                        value={editText}
+                        onChange={onChangeEditText}
+                        onKeyDown={(event)=> onKeyDownEdit(event,index)}
+                        onCompositionStart={() => setIsComposing(true)}
+                        onCompositionEnd={() => setIsComposing(false)}
+                        autoFocus
+                        />
+                    ) : (
+                        <>
+                        {todo}
+                        </>
+                    )}
                     <select onChange={(event) => onChangeSelect(index, event.target.value)} name="incompleteSelect" id="">
                         <option value="ongoing">進行中</option>
                         <option value="waiting">未着手</option>
                         <option value="complete">完了</option>
                     </select>
+                <button onClick={()=>onClickEdit(index)}>編集</button>
                 <button onClick={()=>onClickDelete(index)}>削除</button>
                 </li>
             )}
