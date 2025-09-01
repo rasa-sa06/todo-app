@@ -2,32 +2,50 @@ import React from 'react';
 import { useState } from 'react';
 // import { CreateTodo } from '../types/todo';
 
-// interface TodoItem {
-//     text: string;
-//     deadline: string; // YYYY-MM-DD形式
-// }
+interface TodoItem {
+    text: string;
+    deadline: string; // YYYY-MM-DD形式
+}
 
 
 const Todo = () => {
     const [todoText,setTodoText]=useState<string>("")
-    const [todoDeadline,setTodoDeadline]=useState<string>("")
-    const [incompleteTodos,setIncompleteTodos]=useState<string[]>([]) //日付の設定
-    const [completeTodos, setCompleteTodos] = useState<string[]>([]);
+    const [todoDeadline,setTodoDeadline]=useState<string>("") //日付の設定
+    const [incompleteTodos,setIncompleteTodos]=useState<TodoItem[]>([])  //オブジェクトで型を渡す(TodoItemの中身がオブジェクトになっている)
+    const [completeTodos, setCompleteTodos] = useState<TodoItem[]>([]); //オブジェクトで型を渡す
 
     // 編集機能用の状態
     const [editIndex, setEditIndex] = useState<number | null>(null); // 編集中のindex
     const [editText, setEditText] = useState<string>(""); // 編集中のテキスト
+    const [editDeadline, setEditDeadline] = useState<string>(""); // 編集時の期限
     const [isComposing, setIsComposing] = useState(false); // 日本語変換と確定のEnterを区別する
 
     const onChangeTodoText = (event :React.ChangeEvent<HTMLInputElement>) => setTodoText(event.target.value);
     const onChangeTodoDeadline = (event: React.ChangeEvent<HTMLInputElement>) => setTodoDeadline(event.target.value);
 
+    // 日付をMM／DDに変更する関数
+    const formatDateToMMDD = (dateString: string): string =>{
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const month = String(date.getMonth()+1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${month}/${day}`;
+    }
+
     // 追加ボタンを押した後に未完了のエリアに新しい配列を作る
     const onClickAdd = () => {
         if (todoText === "") return;
-        const newTodos = [...incompleteTodos, todoText];
-        setIncompleteTodos(newTodos);
+        // 元はnewTodos=[...incompleteTodos,todoText]だったが、todoの要素が複数になったことでTodoItemになり
+        // newTodosの中身もオブジェクトで設定する必要が出た。
+        const newTodos: TodoItem = {
+            text: todoText,
+            deadline: todoDeadline
+        };
+        
+        // ここで、新しい配列をincompleteTodosに設定する
+        setIncompleteTodos([...incompleteTodos, newTodos]);
         setTodoText("");
+        setTodoDeadline("");
     };
 
     // 削除ボタンを押したら消す
@@ -73,7 +91,8 @@ const Todo = () => {
     // 編集ボタンを押した時
     const onClickEdit = (index: number) => {
         setEditIndex(index);                    // 編集中のindexを設定
-        setEditText(incompleteTodos[index]);    // 現在のテキストを編集用stateに設定
+        setEditText(incompleteTodos[index].text);    // 現在のテキストを編集用stateに設定
+        setEditDeadline(incompleteTodos[index].deadline); 
     };
 
     // 編集中のテキストが変更された時
@@ -85,12 +104,17 @@ const Todo = () => {
     const onKeyDownEdit = (event: React.KeyboardEvent<HTMLInputElement>, index: number) => {
         if (event.key === "Enter" && !isComposing) {
             const newIncompleteTodos = [...incompleteTodos];
-            newIncompleteTodos[index] = editText;   // 編集内容を反映
+            // 編集内容を反映(こちらもtodoの要素が複数になったのでオブジェクト)
+            newIncompleteTodos[index]={
+                text: editText,
+                deadline: editDeadline
+            };   
             setIncompleteTodos(newIncompleteTodos);
             
             // 編集状態をリセット
             setEditIndex(null);
             setEditText("");
+            setEditDeadline("")
         }
     };
 
@@ -134,9 +158,10 @@ const Todo = () => {
                         autoFocus
                         />
                     ) : (
-                        <>
-                        {todo}
-                        </>
+                        <div>
+                        <span>{todo.text}</span>
+                        <span>期限：{formatDateToMMDD(todo.deadline)}</span>
+                        </div>
                     )}
                     <select onChange={(event) => onChangeSelect(index, event.target.value)} name="incompleteSelect" id="">
                         <option value="ongoing">進行中</option>
@@ -155,7 +180,7 @@ const Todo = () => {
         <ul>
             {completeTodos.map((todo,index)=>
             <li key={index}>
-                {todo}
+                {todo.text}  {/* ここでもtodoの何であるかを選択する必要がある */}
                 <button onClick={()=>onClickBack(index)}>戻す</button>
                 <button onClick={()=>onClickDelete(index)}>削除</button>
             </li>
