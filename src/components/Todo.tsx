@@ -2,11 +2,16 @@ import React from 'react';
 import { useState } from 'react';
 // import { CreateTodo } from '../types/todo';
 
+// interface TodoItem {
+//     text: string;
+//     deadline: string; // YYYY-MM-DD形式
+// }
 
 
 const Todo = () => {
     const [todoText,setTodoText]=useState<string>("")
-    const [incompleteTodos,setIncompleteTodos]=useState<string[]>([])
+    const [todoDeadline,setTodoDeadline]=useState<string>("")
+    const [incompleteTodos,setIncompleteTodos]=useState<string[]>([]) //日付の設定
     const [completeTodos, setCompleteTodos] = useState<string[]>([]);
 
     // 編集機能用の状態
@@ -15,6 +20,7 @@ const Todo = () => {
     const [isComposing, setIsComposing] = useState(false); // 日本語変換と確定のEnterを区別する
 
     const onChangeTodoText = (event :React.ChangeEvent<HTMLInputElement>) => setTodoText(event.target.value);
+    const onChangeTodoDeadline = (event: React.ChangeEvent<HTMLInputElement>) => setTodoDeadline(event.target.value);
 
     // 追加ボタンを押した後に未完了のエリアに新しい配列を作る
     const onClickAdd = () => {
@@ -96,6 +102,12 @@ const Todo = () => {
         placeholder="TODOを入力"
         value={todoText}
         onChange={onChangeTodoText}
+    />
+    {/* 日付を選択 */}
+    <input
+        type="date" //日付をカレンダーで選択ができるようになる
+        value={todoDeadline}
+        onChange={onChangeTodoDeadline}
     />
     <button onClick={onClickAdd}>追加</button>
     </div>
