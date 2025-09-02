@@ -13,6 +13,7 @@ const Todo = () => {
     const [todoDeadline,setTodoDeadline]=useState<string>("") //日付の設定
     const [incompleteTodos,setIncompleteTodos]=useState<TodoItem[]>([])  //オブジェクトで型を渡す(TodoItemの中身がオブジェクトになっている)
     const [completeTodos, setCompleteTodos] = useState<TodoItem[]>([]); //オブジェクトで型を渡す
+    const [filterDate,setFilterDate] = useState<string>(""); // 絞り込み機能
 
     // 編集機能用の状態
     const [editIndex, setEditIndex] = useState<number | null>(null); // 編集中のindex
@@ -22,6 +23,7 @@ const Todo = () => {
 
     const onChangeTodoText = (event :React.ChangeEvent<HTMLInputElement>) => setTodoText(event.target.value);
     const onChangeTodoDeadline = (event: React.ChangeEvent<HTMLInputElement>) => setTodoDeadline(event.target.value);
+    const onChangeFilterDate = (event: React.ChangeEvent<HTMLInputElement>) => setFilterDate(event.target.value);
 
     // 日付をMM／DDに変更する関数
     const formatDateToMMDD = (dateString: string): string =>{
@@ -100,6 +102,10 @@ const Todo = () => {
         setEditText(event.target.value);
     };
 
+    const onChangeEditDeadline = (event: React.ChangeEvent<HTMLInputElement>) =>{
+        setEditDeadline(event.target.value);
+    };
+
     // エンターキーで編集確定
     const onKeyDownEdit = (event: React.KeyboardEvent<HTMLInputElement>, index: number) => {
         if (event.key === "Enter" && !isComposing) {
@@ -117,6 +123,20 @@ const Todo = () => {
             setEditDeadline("")
         }
     };
+
+    // 絞り込み機能を作る
+    const getFilteredTodos = () => {
+        if (!filterDate) return incompleteTodos;
+        return incompleteTodos.filter(todo => todo.deadline === filterDate); // .filterで新しい配列を作る(todo.deadlineとfilterで選んだ日付が一致した時だけ)
+    }
+
+    // 絞り込みをクリア
+    const onClickClearFilter = () =>{
+        setFilterDate("");
+    };
+
+    const filteredTodos = getFilteredTodos();
+
 
     return (
     <>
@@ -136,34 +156,67 @@ const Todo = () => {
     <button onClick={onClickAdd}>追加</button>
     </div>
 
+    {/* 絞り込み機能 */}
     <div>
-        <p>未完了</p>
+        <label>期限で絞る</label>
+        <input
+            type="date" 
+            value={filterDate} 
+            onChange={onChangeFilterDate}
+        />
+        <button onClick={onClickClearFilter} >絞り込みクリア</button>
+        <br />
+        {/* filterDateが空(false)だと、右の評価をしない。filterDateに日付があると右の評価をする*/}
+        {filterDate && (
+                    <span>
+                        {formatDateToMMDD(filterDate)} の期限で絞り込み中 ({filteredTodos.length}件)
+                    </span>
+                )}
+    </div>
+
+    <div>
+        <p>未完了 {filterDate ? `(${formatDateToMMDD(filterDate)}で絞り込み中)` : `(${incompleteTodos.length}件)`}</p>
         <p style={{ fontSize: "12px", color:"blue" }}>※ 編集を確定するときはEnterで決定</p>
         <ul>
-            {incompleteTodos.map((todo,index)=>
-                <li key={index}>
+            {filteredTodos.map((todo,index)=>{
+                // フィルター後の配列のindexを設定
+                const originalIndex = incompleteTodos.findIndex(item =>
+                    item.text === todo.text && item.deadline === todo.deadline
+                );
+            
+                return (
+                    // keyはReactが要素を識別するためのID。レンダリングするときに必要。
+                    // 実際はtodo.idのようにユニークIDを設定する。もしくはDate.now()やuuidというライブラリを使う
+                    <li key={originalIndex}>
                     
                     {/* ↓ indexも一緒に渡すのでアロー関数で渡す必要がある */}
                     {/* ↓ 三項演算子で編集中ならinput、編集していないなら{todo}を表示 */}
-                    {editIndex === index ? (
-                        <input 
-                        type="text"
-                        // 編集中の内容をエンターで確定させる
-                        value={editText}
-                        onChange={onChangeEditText}
-                        onKeyDown={(event)=> onKeyDownEdit(event,index)}
-                        // 日本語の変換確定をさせる
-                        onCompositionStart={() => setIsComposing(true)}
-                        onCompositionEnd={() => setIsComposing(false)}
-                        autoFocus
-                        />
+                    {editIndex === originalIndex ? (
+                        <div>
+                            <input 
+                            type="text"
+                            // 編集中の内容をエンターで確定させる
+                            value={editText}
+                            onChange={onChangeEditText}
+                            onKeyDown={(event)=> onKeyDownEdit(event,originalIndex)}
+                            // 日本語の変換確定をさせる
+                            onCompositionStart={() => setIsComposing(true)}
+                            onCompositionEnd={() => setIsComposing(false)}
+                            autoFocus
+                            />
+                            <input 
+                                type="date"
+                                value={editDeadline}
+                                onChange={onChangeEditDeadline}
+                            />
+                        </div>
                     ) : (
                         <div>
                         <span>{todo.text}</span>
-                        <span>期限：{formatDateToMMDD(todo.deadline)}</span>
+                        <span>期限：{formatDateToMMDD(todo.deadline) || '未設定'}</span>
                         </div>
                     )}
-                    <select onChange={(event) => onChangeSelect(index, event.target.value)} name="incompleteSelect" id="">
+                    <select onChange={(event) => onChangeSelect(originalIndex, event.target.value)} name="incompleteSelect" id="">
                         <option value="ongoing">進行中</option>
                         <option value="waiting">未着手</option>
                         <option value="complete">完了</option>
@@ -171,7 +224,8 @@ const Todo = () => {
                 <button onClick={()=>onClickEdit(index)}>編集</button>
                 <button onClick={()=>onClickDelete(index)}>削除</button>
                 </li>
-            )}
+                )
+})}
         </ul>
     </div>
 
